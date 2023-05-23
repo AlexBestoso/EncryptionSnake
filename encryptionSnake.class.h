@@ -1,6 +1,8 @@
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <openssl/encoder.h>
 
 class EncryptionSnake{
 	private:
@@ -25,6 +27,22 @@ class EncryptionSnake{
 			EVP_CIPHER_free(_aes256cbc);
 			EVP_CIPHER_CTX_free(cipherCtx);
 		}
+
+
+
+		/*
+		 * Public Key variables and functions.
+		 * */
+		EVP_PKEY *keypair = NULL;
+		EVP_PKEY *publicKey = NULL;
+		EVP_PKEY *privateKey = NULL;
+		OSSL_ENCODER_CTX *encoderCtx = NULL;
+
+		void generateRSAKeyFree(){
+			EVP_PKEY_free(keypair);
+			OSSL_ENCODER_CTX_free(encoderCtx);
+		}
+
 
 		/*
 		 * Misclanious variables and functions
@@ -59,6 +77,72 @@ class EncryptionSnake{
 		void printError(void){
 			if(failed)
 				ERR_print_errors_fp(stderr);
+		}
+		/*
+		 * NOTES: 
+		 * 	Generic RSA Key Sizes : 1024 | 4096 | 8192
+		 * */
+		bool generateRsaKeyPairToFile(int bits, bool useDER, string publicKeyLoc, string privateKeyLoc){
+			failed = false;
+			string format = "PEM";
+			if(useDER){
+				format = "DER";
+			}
+			keypair = EVP_RSA_gen(bits);
+			if(keypair == NULL){
+				failed = true;
+				return false;
+			}
+			
+			// Write out Public Key
+			encoderCtx = OSSL_ENCODER_CTX_new_for_pkey(keypair, OSSL_KEYMGMT_SELECT_PUBLIC_KEY, format.c_str(), NULL, NULL);
+			if(encoderCtx == NULL){
+				failed = true;
+				generateRSAKeyFree();
+				return false;
+			}
+
+			FILE *fp = fopen(publicKeyLoc.c_str(), "w+");
+			if(fp == NULL){
+				failed = true;
+				generateRSAKeyFree();
+				return false;
+			}
+
+			if(!OSSL_ENCODER_to_fp(encoderCtx, fp)){
+				fclose(fp);
+				generateRSAKeyFree();
+				failed = true;
+				return false;
+			}
+			fclose(fp);
+			OSSL_ENCODER_CTX_free(encoderCtx);
+
+
+			//Write out Private Key
+			encoderCtx = OSSL_ENCODER_CTX_new_for_pkey(keypair, OSSL_KEYMGMT_SELECT_PRIVATE_KEY, format.c_str(), NULL, NULL);
+			if(encoderCtx == NULL){
+                                failed = true;
+                                generateRSAKeyFree();
+                                return false;
+                        }
+
+			fopen(privateKeyLoc.c_str(), "w+");
+                        if(fp == NULL){
+                                failed = true;
+                                generateRSAKeyFree();
+                                return false;
+                        }
+
+                        if(!OSSL_ENCODER_to_fp(encoderCtx, fp)){
+                                fclose(fp);
+                                generateRSAKeyFree();
+                                failed = true;
+                                return false;
+                        }
+                        fclose(fp);
+			generateRSAKeyFree();
+			return true;
 		}
 
 		string aes256cbc(bool encrypt, string state, size_t stateLen, unsigned char key[32], unsigned char iv[16]){

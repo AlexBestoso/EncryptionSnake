@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <string>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 using namespace std;
 
 #include "encryptionSnake.class.h"
 
 void printSectionBanner(string message){
-	printf("------------------------------------\n\t%s\n------------------------------------\n", message.c_str());
+	printf("\n------------------------------------\n\t%s\n------------------------------------\n", message.c_str());
 }
 
 int main(void){
@@ -18,6 +20,9 @@ int main(void){
 	size_t cipherLen = 0;
 	string msg = "";
 
+	/*
+	 * Test SHA256
+	 * */
 	printSectionBanner("Testing SHA256. Message : 'aaa'"); 
 	hash = encryptionSnake.sha256("aaa", false);	
 	if(encryptionSnake.didFail()){
@@ -27,6 +32,9 @@ int main(void){
 	}
 	printf("Hash : %s\n", hash.c_str());
 
+	/*
+	 * Test AES 256 CBC
+	 * */
 	printSectionBanner("Testing AES 256 CBC. Message : 'What is a banana? Why do you ask me these questions?'");
 	unsigned char key[32] = {
 		0x34, 0x23, 0x00, 0x6d, 0xbb, 0xaa, 0x63, 0x32,
@@ -59,6 +67,23 @@ int main(void){
 	}
 	printf("=== Plain text start\n%s\n=== Plain text end\n", plaintext.c_str());
 
+	/*
+	 * Test RSA Key generation to files.
+	 * */
+	printSectionBanner("Testing RSA Key Generation to file, PEM.");
+	encryptionSnake.generateRsaKeyPairToFile(4096, false, "./PublicKey.RSA.PEM", "./PrivateKey.RSA.PEM");
+	if(encryptionSnake.didFail()){
+		printf("Keygen failure. No other error means file IO error.\n");
+		encryptionSnake.printError();
+		unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+		return 1;
+	}
+	printf("Success! Printing out key pairs in 3 seconds.\n");
+	sleep(3);
+	system("/usr/bin/cat ./PublicKey.RSA.PEM");
+	system("/usr/bin/cat ./PrivateKey.RSA.PEM");
+	printf("Removing sample key files in 1 second\n");
+	unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 
 	return 0;
 }
