@@ -71,18 +71,34 @@ int main(void){
 	 * Test RSA Key generation to files.
 	 * */
 	printSectionBanner("Testing RSA Key Generation to file, PEM.");
-	encryptionSnake.generateRsaKeyPairToFile(4096, false, "./PublicKey.RSA.PEM", "./PrivateKey.RSA.PEM");
+	encryptionSnake.generateRsaKeyPairToFile(4096, false, "./PublicKey.RSA.PEM", "./PrivateKey.RSA.PEM", "MagicBanana123###");
 	if(encryptionSnake.didFail()){
 		printf("Keygen failure. No other error means file IO error.\n");
 		encryptionSnake.printError();
 		unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 		return 1;
 	}
-	printf("Success! Printing out key pairs in 3 seconds.\n");
-	sleep(3);
-	system("/usr/bin/cat ./PublicKey.RSA.PEM");
-	system("/usr/bin/cat ./PrivateKey.RSA.PEM");
-	printf("Removing sample key files in 1 second\n");
+	printf("Success! fetching private key from file.\n");
+	msg = encryptionSnake.fetchRsaKeyFromFile(true, false, "./PrivateKey.RSA.PEM", "MagicBanana123###");
+	if(encryptionSnake.didFail()){
+		printf("Failed to fetch private key from file.\n");
+		encryptionSnake.printError();
+		printf("Deleteing generated files.\n");
+		unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+                return 1;
+	}
+	printf("Read the following private key: \n%s\n", msg.c_str());
+	printf("fetching public key from file.\n");
+        msg = encryptionSnake.fetchRsaKeyFromFile(false, false, "./PublicKey.RSA.PEM", "");
+        if(encryptionSnake.didFail()){
+                printf("Failed to fetch public key from file.\n");
+                encryptionSnake.printError();
+                printf("Deleteing generated files.\n");
+                unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+                return 1;
+        }
+	printf("Read the following public key: \n%s\n", msg.c_str());
+	printf("Removing sample key files\n");
 	unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 
 	return 0;
