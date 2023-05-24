@@ -34,7 +34,6 @@ class EncryptionSnake{
 		}
 
 
-
 		/*
 		 * Public Key variables and functions.
 		 * */
@@ -43,6 +42,7 @@ class EncryptionSnake{
 		EVP_PKEY *privateKey = NULL;
 		OSSL_ENCODER_CTX *encoderCtx = NULL;
 		OSSL_DECODER_CTX *decoderCtx = NULL;
+		EVP_PKEY_CTX *pkeyCtx = NULL;
 
 		void generateRSAKeyFree(void){
 			EVP_PKEY_free(keypair);
@@ -57,6 +57,11 @@ class EncryptionSnake{
 			privateKey = NULL;
 			publicKey = NULL;
 			decoderCtx = NULL;
+		}
+
+		void rsaFree(void){
+			EVP_PKEY_CTX_free(pkeyCtx);
+			pkeyCtx = NULL;
 		}
 
 
@@ -167,7 +172,128 @@ class EncryptionSnake{
 				ERR_print_errors_fp(stderr);
 		}
 
-		string fetchRsaKeyFromFile(bool fetchPrivateKey, bool useDER, string keyLoc, string keyPassword){
+		void cleanOutPrivateKey(void){
+			EVP_PKEY_free(privateKey);
+                        privateKey = NULL;
+		}
+
+		void cleanOutPublicKey(){
+                        EVP_PKEY_free(publicKey);
+                        publicKey = NULL;
+		}
+
+		string rsa(bool encrypt, string msg, size_t msgLen){
+			failed = false;
+			string ret = "";
+			
+			if(encrypt){
+				if(publicKey == NULL){
+					failed = true;
+					return "";
+				}
+				pkeyCtx = EVP_PKEY_CTX_new(publicKey, NULL);
+				if(pkeyCtx == NULL){
+					failed = true;
+					return "";
+				}
+
+				if(!EVP_PKEY_encrypt_init(pkeyCtx)){
+					failed = true;
+					rsaFree();
+					return "";
+				}
+
+				if(!EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, RSA_PKCS1_OAEP_PADDING)){
+					failed = true;
+					rsaFree();
+					return "";
+				}
+
+				unsigned char *output = NULL;
+				size_t outputLen = 0;
+				if(!EVP_PKEY_encrypt(pkeyCtx, NULL, &outputLen, (unsigned char *)msg.c_str(), msgLen)){
+					failed = true;
+					rsaFree();
+					return "";
+				}
+
+				resultLen = outputLen;
+				output = (unsigned char *)OPENSSL_malloc(outputLen);
+				if(output == NULL){
+					failed = true;
+					rsaFree();
+					return "";
+				}
+
+				if(!EVP_PKEY_encrypt(pkeyCtx, output, &outputLen, (unsigned char *)msg.c_str(), msgLen)){
+					failed = true;
+					rsaFree();
+					OPENSSL_free(output);
+					return "";
+				}
+
+				resultLen = outputLen;
+				for(int i=0; i<outputLen; i++)
+					ret = ret + (char)output[i];
+				rsaFree();
+				OPENSSL_free(output);
+
+			}else{
+				if(privateKey == NULL){
+                                        failed = true;
+                                        return "";
+                                }
+                                pkeyCtx = EVP_PKEY_CTX_new(privateKey, NULL);
+                                if(pkeyCtx == NULL){
+                                        failed = true;
+                                        return "";
+                                }
+
+                                if(!EVP_PKEY_decrypt_init(pkeyCtx)){
+                                        failed = true;
+                                        rsaFree();
+                                        return "";
+                                }
+
+                                if(!EVP_PKEY_CTX_set_rsa_padding(pkeyCtx, RSA_PKCS1_OAEP_PADDING)){
+                                        failed = true;
+                                        rsaFree();
+                                        return "";
+                                }
+
+                                unsigned char *output = NULL;
+                                size_t outputLen = 0;
+                                if(!EVP_PKEY_decrypt(pkeyCtx, NULL, &outputLen, (unsigned char *)msg.c_str(), msgLen)){
+                                        failed = true;
+                                        rsaFree();
+                                        return "";
+                                }
+
+				resultLen = outputLen;
+                                output = (unsigned char *)OPENSSL_malloc(outputLen);
+                                if(output == NULL){
+                                        failed = true;
+                                        rsaFree();
+                                        return "";
+                                }
+
+				if(!EVP_PKEY_decrypt(pkeyCtx, output, &outputLen, (unsigned char *)msg.c_str(), msgLen)){
+                                        failed = true;
+                                        rsaFree();
+                                        OPENSSL_free(output);
+                                        return "";
+                                }
+
+                                resultLen = outputLen;
+                                for(int i=0; i<outputLen; i++)
+				  	ret = ret + (char)output[i];
+                                rsaFree();
+                                OPENSSL_free(output);
+			}
+			return ret;
+		}
+
+		string fetchRsaKeyFromFile(bool fetchPrivateKey, bool useDER, bool stringOutput, string keyLoc, string keyPassword){
 			string ret = "";
 			failed = false;
 			string format = "PEM";
@@ -202,15 +328,20 @@ class EncryptionSnake{
 				}
 				fclose(fp);
 
-				// fetch the data for string conversion.
-				ret = convertEvpPkeyToString(true, useDER, privateKey, keyPassword);	
-				if(ret == ""){
-					failed = true;
-					fetchRsaKeyFromFileFree();
-					return "";
-				}
+				if(stringOutput){
+					// fetch the data for string conversion.
+					ret = convertEvpPkeyToString(true, useDER, privateKey, keyPassword);	
+					if(ret == ""){
+						failed = true;
+						fetchRsaKeyFromFileFree();
+						return "";
+					}
 
-				fetchRsaKeyFromFileFree();
+					fetchRsaKeyFromFileFree();
+				}else{
+                        		OSSL_DECODER_CTX_free(decoderCtx);
+                        		decoderCtx = NULL;
+				}
 			}else{
 				decoderCtx = OSSL_DECODER_CTX_new_for_pkey(&publicKey, format.c_str(), NULL, "RSA", OSSL_KEYMGMT_SELECT_PUBLIC_KEY, NULL, NULL);
                                 if(decoderCtx == NULL){
@@ -234,16 +365,20 @@ class EncryptionSnake{
                                 }
                                 fclose(fp);
 
-                                // fetch the data for string conversion.
-                                ret = convertEvpPkeyToString(false, useDER, publicKey, "");
-                                if(ret == ""){
-                                        failed = true;
-                                        fetchRsaKeyFromFileFree();
-                                        return "";
-                                }
-
-
-                                fetchRsaKeyFromFileFree();
+				if(stringOutput){
+	                                // fetch the data for string conversion.
+	                                ret = convertEvpPkeyToString(false, useDER, publicKey, "");
+	                                if(ret == ""){
+	                                        failed = true;
+	                                        fetchRsaKeyFromFileFree();
+	                                        return "";
+	                                }
+	
+                                	fetchRsaKeyFromFileFree();
+				}else{
+                        		OSSL_DECODER_CTX_free(decoderCtx);
+                        		decoderCtx = NULL;
+				}
 			}
 
 			return ret;

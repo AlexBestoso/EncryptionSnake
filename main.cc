@@ -79,7 +79,7 @@ int main(void){
 		return 1;
 	}
 	printf("Success! fetching private key from file.\n");
-	msg = encryptionSnake.fetchRsaKeyFromFile(true, false, "./PrivateKey.RSA.PEM", "MagicBanana123###");
+	msg = encryptionSnake.fetchRsaKeyFromFile(true, false, true, "./PrivateKey.RSA.PEM", "MagicBanana123###");
 	if(encryptionSnake.didFail()){
 		printf("Failed to fetch private key from file.\n");
 		encryptionSnake.printError();
@@ -89,7 +89,7 @@ int main(void){
 	}
 	printf("Read the following private key: \n%s\n", msg.c_str());
 	printf("fetching public key from file.\n");
-        msg = encryptionSnake.fetchRsaKeyFromFile(false, false, "./PublicKey.RSA.PEM", "");
+        msg = encryptionSnake.fetchRsaKeyFromFile(false, false, true, "./PublicKey.RSA.PEM", "");
         if(encryptionSnake.didFail()){
                 printf("Failed to fetch public key from file.\n");
                 encryptionSnake.printError();
@@ -98,6 +98,49 @@ int main(void){
                 return 1;
         }
 	printf("Read the following public key: \n%s\n", msg.c_str());
+
+	printf("Testing RSA encryption with public key:\n");
+	encryptionSnake.fetchRsaKeyFromFile(false, false, false, "./PublicKey.RSA.PEM", "");
+	if(encryptionSnake.didFail()){
+		printf("Failed to load public key into usable memory.\n");
+		encryptionSnake.printError();
+		printf("Cleaning up.\n");
+                unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+		return 1;
+	}
+		msg = "What if we had a massive hotdog, right. And then we just dropped it on our enemies?";
+		msg = encryptionSnake.rsa(true, msg, msg.length());
+		if(encryptionSnake.didFail()){
+			printf("Failed to encipher message.\n");
+			encryptionSnake.printError();
+			encryptionSnake.cleanOutPublicKey();
+			unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+			return 1;
+		}
+		cipherLen = encryptionSnake.getResultLen();
+		printf("=== RSA Encryption Results\n%s\n=== RSA Encryption End\n", msg.c_str());
+	encryptionSnake.cleanOutPublicKey();
+	
+	printf("Testing RSA decryption with private key.\n");
+	encryptionSnake.fetchRsaKeyFromFile(true, false, false, "./PrivateKey.RSA.PEM", "MagicBanana123###");
+	if(encryptionSnake.didFail()){
+                printf("Failed to load private key into usable memory.\n");
+                encryptionSnake.printError();
+                printf("Cleaning up.\n");
+                unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+                return 1;
+        }
+		msg = encryptionSnake.rsa(false, msg, cipherLen);
+                if(encryptionSnake.didFail()){
+                        printf("Failed to decipher message.\n");
+                        encryptionSnake.printError();
+                        encryptionSnake.cleanOutPrivateKey();
+                        unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+                        return 1;
+                }
+                printf("=== RSA Decryption Results\n%s\n=== RSA Decryption End\n", msg.c_str());
+        encryptionSnake.cleanOutPrivateKey();
+
 	printf("Removing sample key files\n");
 	unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 

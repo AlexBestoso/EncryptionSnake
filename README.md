@@ -6,7 +6,10 @@ Use this as you please!
 
 Currently supports:
 <ul>
-<li>SHA 256</li>
-<li>AES 256 CBC</li>
+<li>SHA 256 hashing</li>
+<li>AES 256 CBC encryption and decryption</li>
 <li>RSA key generation to files.</li>
+<li>RSA encryption and decryption</li>
 </ul>
+
+Up Next I'm gonna try and build out AES in CTR mode so that you can use AES for more secure network communication.
