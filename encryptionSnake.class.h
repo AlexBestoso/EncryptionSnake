@@ -24,6 +24,8 @@ class EncryptionSnake{
 		 * Cipher Variables and functions
 		 * */
 		EVP_CIPHER_CTX * cipherCtx = NULL;
+		EVP_CIPHER_CTX * cipherCtrECtx = NULL;
+		EVP_CIPHER_CTX * cipherCtrDCtx = NULL;
 		
 		EVP_CIPHER *_aes256cbc = NULL;
 		void freeAes256Cbc(void){
@@ -32,6 +34,22 @@ class EncryptionSnake{
 			_aes256cbc = NULL;
 			cipherCtx = NULL;
 		}
+
+		EVP_CIPHER *_aes256ctr_encrypt = NULL;
+		EVP_CIPHER *_aes256ctr_decrypt = NULL;
+		void freeAes256Ctr(bool encrypt){
+			if(encrypt){
+				EVP_CIPHER_CTX_free(cipherCtrECtx);
+				cipherCtrECtx = NULL;
+				EVP_CIPHER_free(_aes256ctr_encrypt);
+				_aes256ctr_encrypt = NULL;
+			}else{
+				EVP_CIPHER_CTX_free(cipherCtrDCtx);
+				cipherCtrDCtx = NULL;
+				EVP_CIPHER_free(_aes256ctr_decrypt);
+				_aes256ctr_decrypt = NULL;
+			}
+                }
 
 
 		/*
@@ -451,6 +469,134 @@ class EncryptionSnake{
                         }
                         fclose(fp);
 			generateRSAKeyFree();
+			return true;
+		}
+	
+		string aes256ctr_execute(bool encrypt, string state, size_t stateLen){
+			failed = false;
+			string ret = "";
+			unsigned char *output = NULL;
+			int len;
+
+			if(encrypt){
+				if(cipherCtrECtx == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return "";
+                        	}
+
+                        	if(_aes256ctr_encrypt == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return "";
+                        	}
+				
+				output = new unsigned char[stateLen+16];
+				
+				if(!EVP_EncryptUpdate(cipherCtrECtx, output, &len, (unsigned char *)state.c_str(), stateLen)){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+                                resultLen = len;
+
+                                if(!EVP_EncryptFinal_ex(cipherCtrECtx, output+len, &len)){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+                                resultLen += len;
+
+                                for(int i=0; i<resultLen; i++){
+                                        ret += output[i];
+                                }
+			}else{
+				if(cipherCtrDCtx == NULL){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+
+                                if(_aes256ctr_decrypt == NULL){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+
+				output = new unsigned char[stateLen];
+				
+				if(!EVP_DecryptUpdate(cipherCtrDCtx, output, &len, (unsigned char *)state.c_str(), stateLen)){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+                                resultLen = len;
+
+                                if(!EVP_DecryptFinal_ex(cipherCtrDCtx, output+len, &len)){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return "";
+                                }
+                                resultLen += len;
+
+                                for(int i=0; i<resultLen; i++){
+                                        ret += output[i];
+                                }
+			}
+			delete[] output;
+			return ret;
+		}
+		
+		void aes256ctr_stop(bool encrypt){
+			freeAes256Ctr(encrypt);
+		}
+	
+		bool aes256ctr_start(bool encrypt, unsigned char key[32], unsigned char iv[16]){
+			failed = false;
+			string ret = "";
+			unsigned char *output = NULL;
+			int len = 0;
+
+			if(encrypt){
+				cipherCtrECtx = EVP_CIPHER_CTX_new();
+                        	if(cipherCtrECtx == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return false;
+                        	}
+
+                        	_aes256ctr_encrypt = EVP_CIPHER_fetch(NULL, "AES-256-CTR", NULL);
+                        	if(_aes256ctr_encrypt == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return false;
+                        	}
+				if(!EVP_EncryptInit_ex(cipherCtrECtx, _aes256ctr_encrypt, NULL, key, iv)){
+					failed = true;
+					freeAes256Ctr(encrypt);
+					return false;
+				}
+			}else{
+				cipherCtrDCtx = EVP_CIPHER_CTX_new();
+                        	if(cipherCtrDCtx == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return false;
+                        	}
+
+                        	_aes256ctr_decrypt = EVP_CIPHER_fetch(NULL, "AES-256-CTR", NULL);
+                        	if(_aes256ctr_decrypt == NULL){
+                        	        failed = true;
+                        	        freeAes256Ctr(encrypt);
+                        	        return false;
+                        	}
+				if(!EVP_DecryptInit_ex(cipherCtrDCtx, _aes256ctr_decrypt, NULL, key, iv)){
+                                        failed = true;
+                                        freeAes256Ctr(encrypt);
+                                        return false;
+                                }
+			}
+			delete[] output;
 			return true;
 		}
 

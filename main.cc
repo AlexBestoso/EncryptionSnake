@@ -144,5 +144,53 @@ int main(void){
 	printf("Removing sample key files\n");
 	unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 
+
+	/*
+         * Test AES 256 CTR
+         * */
+        printSectionBanner("Testing AES 256 CTR with 5 iterations. One per second. \nMessage : 'What is a banana? Why do you ask me these questions?'");
+        msg = "What is a banana? Why do you ask me these questions?";
+
+	// Initalize the encryption CTR
+        encryptionSnake.aes256ctr_start(true, key, iv);
+        if(encryptionSnake.didFail()){
+                printf("Failure\n");
+                encryptionSnake.printError();
+                return 1;
+        }
+	// Initalize the decryption CTR
+	encryptionSnake.aes256ctr_start(false, key, iv);
+        if(encryptionSnake.didFail()){
+                printf("Failure\n");
+                encryptionSnake.printError();
+                return 1;
+        }
+	// Test CTR encryption and decryption. the same cipher text should procuce different results.
+	for(int i=0; i<5; i++){
+		// Encrypt
+		ciphertext = encryptionSnake.aes256ctr_execute(true, msg, msg.length());
+        	cipherLen = encryptionSnake.getResultLen();
+        	if(encryptionSnake.didFail()){
+        	        printf("Failure\n");
+        	        encryptionSnake.printError();
+        	        return 1;
+        	}       
+        	printf("Cipher Text Len : %ld\n", (long)cipherLen);
+        	printf("=== Cipher text start\n%s\n=== Cipher text end\n", ciphertext.c_str());
+
+		// Decrypt
+		plaintext = encryptionSnake.aes256ctr_execute(false, ciphertext, cipherLen);
+        	if(encryptionSnake.didFail()){
+        	        printf("Failure\n");
+        	        encryptionSnake.printError();
+        	        return 1;
+        	}
+        	printf("=== Plain text start\n%s\n=== Plain text end\n", plaintext.c_str());
+	}
+	// Free the CTR encryption pointers
+	encryptionSnake.aes256ctr_stop(true);
+	// Free the CTR decryption pointers.
+	encryptionSnake.aes256ctr_stop(false);
+
 	return 0;
 }

@@ -8,8 +8,7 @@ Currently supports:
 <ul>
 <li>SHA 256 hashing</li>
 <li>AES 256 CBC encryption and decryption</li>
+<li>AES 256 CTR encryption and decryption</li>
 <li>RSA key generation to files.</li>
 <li>RSA encryption and decryption</li>
 </ul>
-
-Up Next I'm gonna try and build out AES in CTR mode so that you can use AES for more secure network communication.
