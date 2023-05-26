@@ -24,7 +24,7 @@ int main(void){
 	 * Test SHA256
 	 * */
 	printSectionBanner("Testing SHA256. Message : 'aaa'"); 
-	hash = encryptionSnake.sha256("aaa", false);	
+	hash = encryptionSnake.sha256("aaa", 3, false);	
 	if(encryptionSnake.didFail()){
 		printf("Failure!\n");
 		encryptionSnake.printError();

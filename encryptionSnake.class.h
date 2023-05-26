@@ -677,7 +677,7 @@ class EncryptionSnake{
 			return ret;
 		}
 
-		string sha256(string msg, bool binaryOutput){
+		string sha256(string msg, size_t msgLen, bool binaryOutput){
 			failed = false;
 			string digest = "";
 			mdCtx = EVP_MD_CTX_new();
@@ -701,7 +701,7 @@ class EncryptionSnake{
 			}
 
 	
-			if(!EVP_DigestUpdate(mdCtx, (unsigned char *)msg.c_str(), msg.length())){
+			if(!EVP_DigestUpdate(mdCtx, (unsigned char *)msg.c_str(), msgLen)){
 				failed = true;
 				freeSha256();
 				return "";
