@@ -141,6 +141,18 @@ int main(void){
                 printf("=== RSA Decryption Results\n%s\n=== RSA Decryption End\n", msg.c_str());
         encryptionSnake.cleanOutPrivateKey();
 
+	printf("Testing loading RSA key from a string.\n");
+	msg = encryptionSnake.fetchRsaKeyFromFile(false, false, true, "./PublicKey.RSA.PEM", "");
+	encryptionSnake.fetchRsaKeyFromString(false, false, msg, msg.length(), "");
+	if(encryptionSnake.didFail()){
+		printf("Failed to load key from string.\n");
+		encryptionSnake.printError();
+		printf("Cleaning up.\n");
+                unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
+                return 1;
+	}
+	printf("SUCCESS!\n");
+
 	printf("Removing sample key files\n");
 	unlink("./PublicKey.RSA.PEM");unlink("./PrivateKey.RSA.PEM");
 
