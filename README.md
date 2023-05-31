@@ -11,4 +11,5 @@ Currently supports:
 <li>AES 256 CTR encryption and decryption</li>
 <li>RSA key generation to files.</li>
 <li>RSA encryption and decryption</li>
+<li>Public and Private random byte generation</li>
 </ul>

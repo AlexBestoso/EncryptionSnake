@@ -4,6 +4,7 @@
 #include <openssl/rsa.h>
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
+#include <openssl/rand.h>
 
 class EncryptionSnake{
 	private:
@@ -331,11 +332,7 @@ class EncryptionSnake{
                                 }
 
                                 if(keyPassword != ""){
-					unsigned char *kPass = new unsigned char[keyPassword.length()];
-					for(int i=0; i<keyPassword.length(); i++)
-						kPass[i] = keyPassword[i];
-                                	OSSL_DECODER_CTX_set_passphrase(decoderCtx, (const unsigned char *)kPass, keyPassword.length());
-					delete[] kPass;
+                                	OSSL_DECODER_CTX_set_passphrase(decoderCtx, (const unsigned char *)keyPassword.c_str(), keyPassword.length());
                                 }
 
 				unsigned char *data = new unsigned char[key.length()];
@@ -406,11 +403,7 @@ class EncryptionSnake{
 				}
 
                                 if(keyPassword != ""){
-					unsigned char *kPass = new unsigned char[keyPassword.length()];
-                                	for(int i=0; i<keyPassword.length(); i++)
-                                	        kPass[i] = keyPassword[i];
-                                	        OSSL_DECODER_CTX_set_passphrase(decoderCtx, (const unsigned char *)kPass, keyPassword.length());
-                                	delete[] kPass;
+                              		OSSL_DECODER_CTX_set_passphrase(decoderCtx, (const unsigned char *)keyPassword.c_str(), keyPassword.length());
                                 }
 
 				if(!OSSL_DECODER_from_fp(decoderCtx, fp)){
@@ -810,4 +803,40 @@ class EncryptionSnake{
 			}
 			return digest;
 		}	
+
+		string randomPublic(size_t byteCount){
+			failed = false;
+			if(byteCount <= 0)
+				return "";
+			
+			string ret = "";
+			unsigned char *buf = new unsigned char[byteCount];
+			if(RAND_bytes(buf, byteCount) != 1){
+				failed = true;
+				delete[] buf;
+				return "";
+			}
+			for(int i=0; i<byteCount; i++)
+				ret += buf[i];
+			delete[] buf;
+			return ret;
+		}
+
+		string randomPrivate(size_t byteCount){
+                        failed = false;
+                        if(byteCount <= 0)
+                                return "";
+
+                        string ret = "";
+                        unsigned char *buf = new unsigned char[byteCount];
+                        if(RAND_priv_bytes(buf, byteCount) != 1){
+                                failed = true;
+                                delete[] buf;
+                                return "";
+                        }
+                        for(int i=0; i<byteCount; i++)
+                                ret += buf[i];
+                        delete[] buf;
+                        return ret;
+                }
 };

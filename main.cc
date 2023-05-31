@@ -204,5 +204,26 @@ int main(void){
 	// Free the CTR decryption pointers.
 	encryptionSnake.aes256ctr_stop(false);
 
+	printSectionBanner("Testing Random number generation.'");
+	printf("Testing public randomness\n");
+	string random = encryptionSnake.randomPublic(10);
+	if(encryptionSnake.didFail()){
+		printf("FAiled to generate random bytes,\n");
+	}
+	printf("Result in hex: ");
+	for(int i=0; i<10; i++){
+		printf("%x ", random[i]);
+	}printf("\n\n");
+
+	printf("Testing private randomness\n");
+        random = encryptionSnake.randomPrivate(10);
+        if(encryptionSnake.didFail()){
+                printf("FAiled to generate random bytes,\n");
+        }
+        printf("Result in hex: ");
+        for(int i=0; i<10; i++){
+                printf("%x ", random[i]);
+        }printf("\n\n");
+
 	return 0;
 }
