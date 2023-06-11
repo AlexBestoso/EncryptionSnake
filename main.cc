@@ -225,5 +225,30 @@ int main(void){
                 printf("%x ", random[i]);
         }printf("\n\n");
 
+	// Test base64 encoding
+	printSectionBanner("Testing Base64 Encoding.");
+	printf("Testing Encode : ");
+	string ogMessage = "Z";
+	for(int i=0; i<100; i++){
+		ogMessage = "a" + ogMessage;
+	}
+	printf("%s\n", ogMessage.c_str());
+	string b64 = encryptionSnake.base64(true, ogMessage, ogMessage.length());
+	if(encryptionSnake.didFail()){
+		encryptionSnake.printError();
+		printf("Failed to base 64 encode data\n");
+		return 1;
+	}
+	printf("Encoded Message : \n%s\n", b64.c_str());
+
+	printf("Decoding message\n");
+	b64 = encryptionSnake.base64(false, b64, b64.length());
+        if(encryptionSnake.didFail()){
+                encryptionSnake.printError();
+                printf("Failed to base 64 decode data\n");
+                return 1;
+        }
+	printf("Decoded Message : \n%s\n", b64.c_str());
+
 	return 0;
 }
