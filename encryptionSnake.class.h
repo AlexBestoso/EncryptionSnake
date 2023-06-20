@@ -530,9 +530,7 @@ class EncryptionSnake{
                         }
 
 			if(keyPassword != ""){
-				printf("Failing here.\n");
 				OSSL_ENCODER_CTX_set_passphrase(encoderCtx, (const unsigned char *)keyPassword.c_str(), keyPassword.length());
-				printf("nig\n");
                         }
 
                         if(!OSSL_ENCODER_to_fp(encoderCtx, fp)){
