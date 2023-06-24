@@ -352,7 +352,6 @@ class EncryptionSnake{
                                         return "";
                                 }
 
-				delete doublePointer;
 				delete[] data;
                                 OSSL_DECODER_CTX_free(decoderCtx);
                                 decoderCtx = NULL;
