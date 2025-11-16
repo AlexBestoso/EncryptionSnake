@@ -96,11 +96,11 @@ class EncryptionSnake{
 		 * Misclanious variables and functions
 		 * */
 
-		string convertEvpPkeyToString(bool isPrivateKey, bool useDER, EVP_PKEY *key, string keyPassword){
+		std::string convertEvpPkeyToString(bool isPrivateKey, bool useDER, EVP_PKEY *key, std::string keyPassword){
 			unsigned char *output = NULL;
 			size_t outputSize = 0;
-			string ret = "";
-			string format = "PEM";
+			std::string ret = "";
+			std::string format = "PEM";
 			if(useDER){
 				format = "DER";
 			}
@@ -124,7 +124,7 @@ class EncryptionSnake{
 				resultLen = outputSize;
 				// Ensure no corrupt/leaked bytes are involved.
 				if(ret.length() != outputSize){
-					string newRet = "";
+					std::string newRet = "";
 					for(int i=0; i<outputSize; i++){
 						newRet = newRet + (char)output[i];
 					}
@@ -152,7 +152,7 @@ class EncryptionSnake{
 				resultLen = outputSize;
 				// Ensure no corrupt/leaked bytes are involved.
 				if(ret.length() != outputSize){
-					string newRet = "";
+					std::string newRet = "";
 					for(int i=0; i<outputSize; i++){
 						newRet = newRet + (char)output[i];
 					}
@@ -170,14 +170,14 @@ class EncryptionSnake{
 		bool failed = false;
 		size_t resultLen = 0;
 
-		string binToStr(string val, size_t len){
+		std::string binToStr(std::string val, size_t len){
 			const char convRay[16] = {
 				'0', '1', '2', '3', '4', '5', '6',
 				'7', '8', '9', 'A', 'B', 'C', 'D', 
 				'E', 'F'
 			};
 			
-			string ret = "";
+			std::string ret = "";
         	        for(int i=0; i<len; i++){
 				char b = val[i];
 				int indexA = (b>>4)&0xf;
@@ -209,9 +209,9 @@ class EncryptionSnake{
                         publicKey = NULL;
 		}
 
-		string rsa(bool encrypt, string msg, size_t msgLen){
+		std::string rsa(bool encrypt, std::string msg, size_t msgLen){
 			failed = false;
-			string ret = "";
+			std::string ret = "";
 			
 			if(encrypt){
 				if(publicKey == NULL){
@@ -320,9 +320,9 @@ class EncryptionSnake{
 			return ret;
 		}
 
-		bool fetchRsaKeyFromString(bool fetchPrivateKey, bool useDER, string key, size_t keyLen, string keyPassword){
+		bool fetchRsaKeyFromString(bool fetchPrivateKey, bool useDER, std::string key, size_t keyLen, std::string keyPassword){
 			failed = false;
-                        string format = "PEM";
+                        std::string format = "PEM";
                         if(useDER){
                                 format = "DER";
                         }
@@ -382,10 +382,10 @@ class EncryptionSnake{
 			return true;
 		}
 
-		string fetchRsaKeyFromFile(bool fetchPrivateKey, bool useDER, bool stringOutput, string keyLoc, string keyPassword){
-			string ret = "";
+		std::string fetchRsaKeyFromFile(bool fetchPrivateKey, bool useDER, bool stringOutput, std::string keyLoc, std::string keyPassword){
+			std::string ret = "";
 			failed = false;
-			string format = "PEM";
+			std::string format = "PEM";
 			if(useDER){
 				format = "DER";
 			}
@@ -418,7 +418,7 @@ class EncryptionSnake{
 				fclose(fp);
 
 				if(stringOutput){
-					// fetch the data for string conversion.
+					// fetch the data for std::string conversion.
 					ret = convertEvpPkeyToString(true, useDER, privateKey, keyPassword);	
 					if(ret == ""){
 						failed = true;
@@ -455,7 +455,7 @@ class EncryptionSnake{
                                 fclose(fp);
 
 				if(stringOutput){
-	                                // fetch the data for string conversion.
+	                                // fetch the data for std::string conversion.
 	                                ret = convertEvpPkeyToString(false, useDER, publicKey, "");
 	                                if(ret == ""){
 	                                        failed = true;
@@ -476,9 +476,9 @@ class EncryptionSnake{
 		 * NOTES: 
 		 * 	Generic RSA Key Sizes : 1024 | 4096 | 8192
 		 * */
-		bool generateRsaKeyPairToFile(int bits, bool useDER, string publicKeyLoc, string privateKeyLoc, string keyPassword){
+		bool generateRsaKeyPairToFile(int bits, bool useDER, std::string publicKeyLoc, std::string privateKeyLoc, std::string keyPassword){
 			failed = false;
-			string format = "PEM";
+			std::string format = "PEM";
 			if(useDER){
 				format = "DER";
 			}
@@ -543,9 +543,9 @@ class EncryptionSnake{
 			return true;
 		}
 	
-		string aes256ctr_execute(bool encrypt, string state, size_t stateLen){
+		std::string aes256ctr_execute(bool encrypt, std::string state, size_t stateLen){
 			failed = false;
-			string ret = "";
+			std::string ret = "";
 			unsigned char *output = NULL;
 			int len;
 
@@ -624,7 +624,7 @@ class EncryptionSnake{
 	
 		bool aes256ctr_start(bool encrypt, unsigned char key[32], unsigned char iv[16]){
 			failed = false;
-			string ret = "";
+			std::string ret = "";
 			unsigned char *output = NULL;
 			int len = 0;
 
@@ -671,9 +671,9 @@ class EncryptionSnake{
 			return true;
 		}
 
-		string aes256cbc(bool encrypt, string state, size_t stateLen, unsigned char key[32], unsigned char iv[16]){
+		std::string aes256cbc(bool encrypt, std::string state, size_t stateLen, unsigned char key[32], unsigned char iv[16]){
 			failed = false;
-			string ret = "";
+			std::string ret = "";
 			unsigned char *output = NULL;
 			int len = 0;
 			
@@ -748,9 +748,9 @@ class EncryptionSnake{
 			return ret;
 		}
 
-		string sha256(string msg, size_t msgLen, bool binaryOutput){
+		std::string sha256(std::string msg, size_t msgLen, bool binaryOutput){
 			failed = false;
-			string digest = "";
+			std::string digest = "";
 			mdCtx = EVP_MD_CTX_new();
 			if(mdCtx == NULL){
 				failed = true;
@@ -811,12 +811,12 @@ class EncryptionSnake{
 		/*
 		 * Random number generation
 		 * */
-		string randomPublic(size_t byteCount){
+		std::string randomPublic(size_t byteCount){
 			failed = false;
 			if(byteCount <= 0)
 				return "";
 			
-			string ret = "";
+			std::string ret = "";
 			unsigned char *buf = new unsigned char[byteCount];
 			if(RAND_bytes(buf, byteCount) != 1){
 				failed = true;
@@ -829,12 +829,12 @@ class EncryptionSnake{
 			return ret;
 		}
 
-		string randomPrivate(size_t byteCount){
+		std::string randomPrivate(size_t byteCount){
                         failed = false;
                         if(byteCount <= 0)
                                 return "";
 
-                        string ret = "";
+                        std::string ret = "";
                         unsigned char *buf = new unsigned char[byteCount];
                         if(RAND_priv_bytes(buf, byteCount) != 1){
                                 failed = true;
@@ -851,14 +851,14 @@ class EncryptionSnake{
 		 * Base64 Encoding
 		 * */
 
-		string base64(bool encode, string in, size_t size){
+		std::string base64(bool encode, std::string in, size_t size){
 			failed = false;
 			if(size <= 0){
 				failed = true;
 				return "";
 			}
 
-			string ret = "";
+			std::string ret = "";
 			if(encode){
 				unsigned char *inbuf = new unsigned char[size];
 				size_t outBufCalculated = ((size/48) * 66) + 66;
